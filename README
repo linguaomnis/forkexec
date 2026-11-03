@@ -1,0 +1,37 @@
+HOW TO INSTALL
+
+1.  copy whole contents of this project in your machine
+    ex.) cd ${HOME}; git clone https://github.com/linguaomnis/forkexec.git;
+    or simply via zip
+
+2.  do "make" for this project
+    ex.) make -C ${HOME}/forkexec/src;
+
+3.  do "make install" for this project
+    ex.) make install -C ${HOME}/forkexec/src;
+
+4.  add path forkexec/bin/ to $PATH in ${HOME}.bashrc,
+    ex.) open ${HOME}.bashrc to edit it
+
+        from:
+        > # User specific environment
+        > if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]; then
+        >     PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+        > fi
+        > export PATH
+
+        to:
+        > # User specific environment
+        > if ! [[ "$PATH" =~ "$HOME/forkexec/bin:$HOME/.local/bin:$HOME/bin:" ]]; then
+        >     PATH="$HOME/forkexec/bin:$HOME/.local/bin:$HOME/bin:$PATH"
+        > fi
+        > export PATH
+
+    or you can directly run in ${HOME}/forkexec/bin/<executable-to-run>
+
+
+HOW TO UNINSTALL
+
+1.  do "make uninstall" for this project
+    ex.) make uninstall -C ${HOME}/forkexec/src;
+
