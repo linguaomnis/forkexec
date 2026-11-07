@@ -1,7 +1,7 @@
 #include <tmrhrm_osc.h>
 #include <tmrhrm_seq.h>
-#include <tmrhrm_wav.h>
 #include <tmrhrm_util.h>
+#include <izm.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
@@ -111,8 +111,8 @@ unsigned char song_init( SONG* _p, const char* _fpath )
     unsigned int step_prevtempochaned = 0;
     unsigned int tick_prevtempochaned = 0;
 
-    vector_init( &(_p->osclist), sizeof(OSC) );
-    vector_init( &(_p->evnlist), sizeof(EVENT) );
+    izmvector_init( &(_p->osclist), sizeof(OSC) );
+    izmvector_init( &(_p->evnlist), sizeof(EVENT) );
     if( _p->wav != NULL )
     {
         free( _p->wav );
@@ -126,7 +126,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
     while( fgets( line, sizeof(line), fp ) )
     {
         linenum++;
-        str_trim( line );
+        izmstr_trim( line );
 
         memset( token, 0x0, sizeof(token) );
         int tokennum = sscanf( line, "%s %s %s %s %s %s %s %s\n"
@@ -245,7 +245,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
                 { tick, 0, EVENT_TYPE_SET_OSC },
                 oscid, type,
             };
-            vector_insert( &_p->evnlist, _p->evnlist.length, &event );
+            izmvector_insert( &_p->evnlist, _p->evnlist.length, &event );
             // fprintf( stdout, "osc : type[%d]\n", type );
         }
         else if( strcmp( token[0], "VOLUME" ) == 0 )
@@ -265,7 +265,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
                 { tick, oscid, EVENT_TYPE_SET_VOLUME },
                 volume
             };
-            vector_insert( &_p->evnlist, _p->evnlist.length, &event );
+            izmvector_insert( &_p->evnlist, _p->evnlist.length, &event );
             // fprintf( stdout, "volume : oscid[%d] volume[%d]\n", oscid, volume );
         }
         else if( strcmp( token[0], "ADSR" ) == 0 )
@@ -316,7 +316,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
                 attack, decay, release, sustain,
                 attack_set, decay_set, release_set, sustain_set,
             };
-            vector_insert( &_p->evnlist, _p->evnlist.length, &event );
+            izmvector_insert( &_p->evnlist, _p->evnlist.length, &event );
             // fprintf( stdout, "adsr : oscid[%d] attack[%d] decay[%d] sustain[%d] release[%d]\n", oscid, attack, decay, sustain, release );
         }
         else if( strcmp( token[0], "AM" ) == 0 )
@@ -374,7 +374,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
                 am_delay_set,
                 am_ascend_set,
             };
-            vector_insert( &_p->evnlist, _p->evnlist.length, &event );
+            izmvector_insert( &_p->evnlist, _p->evnlist.length, &event );
             // fprintf( stdout, "am : oscid[%u] am[%u] am_frequency[%f] am_delay[%u] am_ascend[%u]\n", oscid, am, am_frequency, am_delay, am_ascend );
         }
         else if( strcmp( token[0], "FM" ) == 0 )
@@ -403,7 +403,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
                 fm,
                 fm_set
             };
-            vector_insert( &_p->evnlist, _p->evnlist.length, &event );
+            izmvector_insert( &_p->evnlist, _p->evnlist.length, &event );
             // fprintf( stdout, "fm : oscid[%u] fm[%u] fm_frequency[%f] fm_delay[%u] fm_ascend[%u]\n", oscid, fm, fm_frequency, fm_delay, fm_ascend );
         }
         else if( token[0][0] == '>' )
@@ -453,7 +453,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
                         onoff
                     };
 
-                    vector_insert( &_p->evnlist, _p->evnlist.length, &event );
+                    izmvector_insert( &_p->evnlist, _p->evnlist.length, &event );
                     // fprintf( stdout, "onoff : step[%d] tick[%d] oscid[%d] onoff[%d]\n"
                     //                 , step 
                     //                 , tick
@@ -480,14 +480,14 @@ unsigned char song_init( SONG* _p, const char* _fpath )
                         frequency
                     };
 
-                    vector_insert( &_p->evnlist, _p->evnlist.length, &event_frequency );
+                    izmvector_insert( &_p->evnlist, _p->evnlist.length, &event_frequency );
 
                     EVENT_SET_ONOFF event_onoff = {
                         { tick, oscid, EVENT_TYPE_SET_ONOFF },
                         onoff 
                     };
 
-                    vector_insert( &_p->evnlist, _p->evnlist.length, &event_onoff );
+                    izmvector_insert( &_p->evnlist, _p->evnlist.length, &event_onoff );
 
                     // fprintf( stdout, "onoff : step[%d] tick[%d] oscid[%d] note[%s] frequency[%d] onoff[%d]\n"
                     //                 , step 
@@ -532,7 +532,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
 
     fprintf( stdout, "data_length[%d]\n", _p->data_length );
 
-    _p->wav = wav16_new( _p->data_length, _p->sampling_frequency );
+    _p->wav = izmwav16_new( _p->data_length, _p->sampling_frequency );
 
     return( SONG_OK );
 };
@@ -555,11 +555,11 @@ void song_event( SONG* _p, EVENT* _event )
                     _p->osclist.length
                 );
 
-            vector_insert( &_p->osclist, _p->osclist.length, &osc_null );
+            izmvector_insert( &_p->osclist, _p->osclist.length, &osc_null );
         }
 
         osc_init(
-                vector_at( &(_p->osclist), event->oscid ),
+                izmvector_at( &(_p->osclist), event->oscid ),
                 _p->sampling_frequency,
                 event->type,
                 event->oscid
@@ -584,12 +584,12 @@ unsigned char song_play( SONG* _p )
 
     for( unsigned int tick = 0; tick < _p->data_length; tick++ )
     {
-        EVENT* event = (EVENT*)vector_at( &_p->evnlist, event_index );
+        EVENT* event = (EVENT*)izmvector_at( &_p->evnlist, event_index );
         if( event->head.tick <= tick )
         {
             for( ; event_index < _p->evnlist.length; event_index++ )
             {
-                event = (EVENT*)vector_at( &_p->evnlist, event_index );
+                event = (EVENT*)izmvector_at( &_p->evnlist, event_index );
 
                 if( tick < event->head.tick )
                 {
@@ -604,7 +604,7 @@ unsigned char song_play( SONG* _p )
                 else if( EVENT_TYPE_OSC_MIN <= event->head.type
                  && event->head.type <= EVENT_TYPE_OSC_MAX )
                 {
-                    OSC* osc = (OSC*)vector_at( &_p->osclist, event->head.oscid );
+                    OSC* osc = (OSC*)izmvector_at( &_p->osclist, event->head.oscid );
                     osc_event( osc, event );
                 }
                 else
@@ -621,7 +621,7 @@ unsigned char song_play( SONG* _p )
         _p->wav->data[tick] = 0;
         for( size_t i = 0; i < _p->osclist.length; i++ )
         {
-            OSC* osc = (OSC*)vector_at( &_p->osclist, i );
+            OSC* osc = (OSC*)izmvector_at( &_p->osclist, i );
             _p->wav->data[tick] += osc_stat( osc );
             osc_next( osc );
         }
@@ -637,7 +637,7 @@ size_t song_export( SONG* _p, const char* _fpath )
         return( 1 );
     }
 
-    size = wav16_fwrite( _p->wav, _fpath, "w" );
+    size = izmwav16_fwrite( _p->wav, _fpath, "w" );
 
     return( size );
 };

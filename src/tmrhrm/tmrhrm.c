@@ -1,4 +1,3 @@
-#include <tmrhrm_wav.h>
 #include <tmrhrm_osc.h>
 #include <tmrhrm_seq.h>
 #include <tmrhrm_util.h>

@@ -5,18 +5,18 @@ PROJECTROOT_DPATH= \
 
 forkexec :
 	export PROJECTROOT_DPATH=${PROJECTROOT_DPATH}; \
-	find */ -type f -name makefile | xargs -r -L1 dirname | xargs -r -ITARGET make -C TARGET;
+	make -f makefile.lib; make -f makefile.bin;
 
 .PHONY : clean install uninstall
 
 clean :
 	export PROJECTROOT_DPATH=${PROJECTROOT_DPATH}; \
-	find */ -type f -name makefile | xargs -r -L1 dirname | xargs -r -ITARGET make clean -C TARGET;
+	make -f makefile.bin clean; make -f makefile.lib clean;
 
 install :
 	export PROJECTROOT_DPATH=${PROJECTROOT_DPATH}; \
-	find */ -type f -name makefile | xargs -r -L1 dirname | xargs -r -ITARGET make install -C TARGET;
+	make -f makefile.lib install; make -f makefile.bin install;
 
 uninstall :
 	export PROJECTROOT_DPATH=${PROJECTROOT_DPATH}; \
-	find */ -type f -name makefile | xargs -r -L1 dirname | xargs -r -ITARGET make uninstall -C TARGET;
+	make -f makefile.bin uninstall; make -f makefile.lib uninstall;

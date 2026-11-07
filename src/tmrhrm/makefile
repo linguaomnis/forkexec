@@ -1,9 +1,11 @@
 LINK_OPT= \
+	-L../libizm -lizm \
 	-lm
 
 COMPILE_OPT= \
 	-D PROJECTROOT_DPATH=${PROJECTROOT_DPATH} \
 	-I. \
+	-I../libizm \
 	-Wno-pointer-arith \
 	-g \
 	-O0
@@ -12,14 +14,12 @@ OBJ= \
 	tmrhrm_osc.o \
 	tmrhrm_seq.o \
 	tmrhrm_util.o \
-	tmrhrm_wav.o \
 	tmrhrm.o
 
 HEADER= \
 	tmrhrm_osc.h \
 	tmrhrm_seq.h \
-	tmrhrm_util.h \
-	tmrhrm_wav.h
+	tmrhrm_util.h
 
 all : tmrhrm
 
@@ -28,9 +28,6 @@ tmrhrm : ${OBJ}
 
 tmrhrm.o : tmrhrm.c ${HEADER}
 	gcc -c ${COMPILE_OPT} -o tmrhrm.o tmrhrm.c;
-
-tmrhrm_wav.o : tmrhrm_wav.c ${HEADER}
-	gcc -c ${COMPILE_OPT} -o tmrhrm_wav.o tmrhrm_wav.c;
 
 tmrhrm_osc.o : tmrhrm_osc.c ${HEADER}
 	gcc -c ${COMPILE_OPT} -o tmrhrm_osc.o tmrhrm_osc.c;

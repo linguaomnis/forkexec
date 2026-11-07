@@ -2,7 +2,7 @@
 #define HRM_SEQ_H
 
 #include <tmrhrm_util.h>
-#include <tmrhrm_wav.h>
+#include <izm.h>
 
 #define SONG_OK     (0)
 #define SONG_NG     (1)
@@ -108,9 +108,9 @@ typedef struct
 {
     unsigned int sampling_frequency; /* [Hz] */
     unsigned int data_length;
-    VECTOR osclist;
-    VECTOR evnlist;
-    WAV16* wav;
+    IZMVECTOR osclist;
+    IZMVECTOR evnlist;
+    IZMWAV16* wav;
 } SONG;
 
 unsigned char song_init( SONG* _p, const char* _fpath );

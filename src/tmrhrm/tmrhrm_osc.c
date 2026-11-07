@@ -1,5 +1,6 @@
 #include <tmrhrm_osc.h>
 #include <tmrhrm_util.h>
+#include <izm.h>
 #include <time.h>
 #include <math.h>
 #include <limits.h>
@@ -336,7 +337,7 @@ void osc_next( OSC* _p )
 
 double osc_tri( double x )
 {
-    double x2 = fmod2( x, 2.0 * M_PI );
+    double x2 = izmmath_fmod2( x, 2.0 * M_PI );
 
     if( x2 <= ( M_PI / 2.0 ) )
     {
@@ -359,7 +360,7 @@ double osc_tri( double x )
 
 double osc_square( double x, unsigned char rate /* 0..255 */ )
 {
-    double x2 = fmod2( x, 2.0 * M_PI );
+    double x2 = izmmath_fmod2( x, 2.0 * M_PI );
     double rate2 = (double)rate / (double)UCHAR_MAX;
 
     if( x2 <= ( 2.0 * M_PI ) * rate2 )
