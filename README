@@ -10,7 +10,9 @@ HOW TO INSTALL
 3.  do "make install" for this project
     ex.) make install -C ${HOME}/forkexec/src;
 
-4.  add path forkexec/bin/ to $PATH in ${HOME}.bashrc,
+4.  add path ${HOME}/forkexec/bin to $PATH
+    and add path ${HOME}/forkexec/lib to $LD_LIBRARY_PATH
+    in ${HOME}.bashrc,
     ex.) open ${HOME}.bashrc to edit it
 
         from:
@@ -22,13 +24,15 @@ HOW TO INSTALL
 
         to:
         > # User specific environment
-        > if ! [[ "$PATH" =~ "$HOME/forkexec/bin:$HOME/.local/bin:$HOME/bin:" ]]; then
-        >     PATH="$HOME/forkexec/bin:$HOME/.local/bin:$HOME/bin:$PATH"
+        > export FORKEXEC="$HOME/forkexec";
+        > if ! [[ "$PATH" =~ "$FORKEXEC/bin:$HOME/.local/bin:$HOME/bin:" ]]; then
+        >     PATH="$FORKEXEC/bin:$HOME/.local/bin:$HOME/bin:$PATH"
         > fi
         > export PATH
-
-    or you can directly run in ${HOME}/forkexec/bin/<executable-to-run>
-
+        > if ! [[ "$LD_LIBRARY_PATH" =~ "$FORKEXEC/lib:" ]]; then
+        >     LD_LIBRARY_PATH="$FORKEXEC/lib:$LD_LIBRARY_PATH"
+        > fi
+        > export LD_LIBRARY_PATH
 
 HOW TO UNINSTALL
 
