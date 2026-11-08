@@ -12,6 +12,8 @@
 #define IZM_OK       (0)
 #define IZM_NG       (1)
 #define IZM_ERROR    (2)
+#define IZM_NONE     (3)
+#define IZM_END      (4)
 
 /*============================================================*/
 /* IZMMATH                                                    */
@@ -22,6 +24,106 @@ double izmmath_fmod2( double x, double y );
 /* IZMSTR                                                     */
 /*============================================================*/
 char* izmstr_trim( char* _str );
+
+/* _strbuf のオフセット _offset から長さ _length の領域を _shiftnum だけずらす。 */
+/* ずれた跡の領域には _fillchar を入れる。 */
+/* はみ出す分は切り捨て。終端文字\0は考慮されない。 */
+unsigned char izmstr_shift(
+    char* _strbuf,
+    const size_t _strbufsize,
+    const size_t _offset,
+    const size_t _length,
+    const int _shiftnum,
+    const char _fillchar
+);
+
+/* _strbuf のオフセット _offset から長さ _length の領域を _replace で置き換える。 */
+/* 置き換え後の文字列全体(終端文字\0含む)が _strbuf に入りきらない場合、 IZM_ERROR を返す。 */
+/* IZM_ERROR を返す場合、 _strbuf は変化しない。 */
+unsigned char izmstr_replace(
+    char* _strbuf,
+    const size_t _strbufsize,
+    const size_t _offset,
+    const size_t _length,
+    const const char* _replace,
+    const size_t _replacelength
+);
+
+unsigned char izmstr_remove(
+    char* _strbuf,
+    const size_t _strbufsize,
+    const size_t _offset,
+    const size_t _length
+);
+
+unsigned char izmstr_remove_back(
+    char* _strbuf,
+    const size_t _strbufsize,
+    const size_t _length
+);
+
+unsigned char izmstr_insert(
+    char* _strbuf,
+    const size_t _strbufsize,
+    const size_t _offset,
+    const const char* _insert,
+    const size_t _insertsize
+);
+
+unsigned char izmstr_insert_back(
+    char* _strbuf,
+    const size_t _strbufsize,
+    const const char* _insert,
+    const size_t _insertsize
+);
+
+/* 全体マッチ1個と()グループのマッチ数を足した数の上限 */
+#define IZMSTR_REGEXMATCH_MAXMATCH          (16)
+#define IZMSTR_REGEXMATCH_SUBMATCH_MAXSIZE  (PATH_MAX)
+
+typedef struct _IZMSTR_REGEXMATCH_MATCH {
+    size_t  offset;
+    size_t  length;
+    char    str[IZMSTR_REGEXMATCH_SUBMATCH_MAXSIZE];
+} IZMSTR_REGEXMATCH_MATCH;
+
+typedef struct _IZMSTR_REGEXMATCH {
+    unsigned char           stat_comp; /* regcomp status */
+    unsigned char           stat_exec; /* regexec status */
+    IZMSTR_REGEXMATCH_MATCH match[IZMSTR_REGEXMATCH_MAXMATCH];
+} IZMSTR_REGEXMATCH;
+
+/* return : IZM_OK (match), IZM_END (no match), IZM_ERROR (error) */
+/* ()グループのマッチ数が多すぎる場合、 stat_comp に REG_ESPACE が入る */
+unsigned char izmstr_regexmatch(
+    const char* _pattern,
+    const char* _strbuf,
+    IZMSTR_REGEXMATCH* _regexmatch
+);
+
+/* 最初にマッチした1箇所を文字列 _replace で置換する。 */
+/* return : IZM_OK, IZM_ERROR (error) */
+/* 置換した数が0回でも、エラーでなければ IZM_OK を返す。 */
+/* _pattern の()グループに対する _replace のキャプチャ\\1,\\2,..が使用可能。 */
+/* ただし全体マッチ1個とあわせて最大 IZMSTR_REGEXMATCH_MAXMATCH 個まで。 */
+unsigned char izmstr_regexreplace(
+    const char* _pattern,
+    char* _strbuf,
+    const size_t _strbufsize,
+    const char* _replace
+);
+
+/* マッチした全箇所を文字列 _replace で置換する。 */
+/* return : IZM_OK, IZM_ERROR (error) */
+/* 置換した数が0回でも、エラーでなければ IZM_OK を返す。 */
+/* _pattern の()グループに対する _replace のキャプチャ\\1,\\2,..が使用可能。 */
+/* ただし全体マッチ1個とあわせて最大 IZMSTR_REGEXMATCH_MAXMATCH 個まで。 */
+unsigned char izmstr_regexreplace_global(
+    const char* _pattern,
+    char* _strbuf,
+    const size_t _strbufsize,
+    const char* _replace
+);
 
 /*============================================================*/
 /* IZMVECTOR                                                  */
