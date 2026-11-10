@@ -2,7 +2,6 @@ LINK_OPT= \
 	-shared
 
 COMPILE_OPT= \
-	-D PROJECTROOT_DPATH=${PROJECTROOT_DPATH} \
 	-I. \
 	-Wno-pointer-arith \
 	-fPIC \
@@ -10,37 +9,42 @@ COMPILE_OPT= \
 	-O0
 
 OBJ= \
+	izmlog.o \
 	izmmath.o \
 	izmstr.o \
 	izmvector.o \
 	izmwav.o
 
 HEADER= \
+	izm.hpp \
 	izm.h
 
 all : libizm.so
 
 libizm.so : ${OBJ}
-	gcc ${LINK_OPT} -o libizm.so ${OBJ};
+	g++ ${LINK_OPT} -o libizm.so ${OBJ};
 
-izmmath.o : izmmath.c ${HEADER}
-	gcc -c ${COMPILE_OPT} -o izmmath.o izmmath.c;
+izmlog.o : izmlog.cpp ${HEADER}
+	g++ -c ${COMPILE_OPT} -o izmlog.o izmlog.cpp;
 
-izmstr.o : izmstr.c ${HEADER}
-	gcc -c ${COMPILE_OPT} -o izmstr.o izmstr.c;
+izmmath.o : izmmath.cpp ${HEADER}
+	g++ -c ${COMPILE_OPT} -o izmmath.o izmmath.cpp;
 
-izmvector.o : izmvector.c ${HEADER}
-	gcc -c ${COMPILE_OPT} -o izmvector.o izmvector.c;
+izmstr.o : izmstr.cpp ${HEADER}
+	g++ -c ${COMPILE_OPT} -o izmstr.o izmstr.cpp;
 
-izmwav.o : izmwav.c ${HEADER}
-	gcc -c ${COMPILE_OPT} -o izmwav.o izmwav.c;
+izmvector.o : izmvector.cpp ${HEADER}
+	g++ -c ${COMPILE_OPT} -o izmvector.o izmvector.cpp;
+
+izmwav.o : izmwav.cpp ${HEADER}
+	g++ -c ${COMPILE_OPT} -o izmwav.o izmwav.cpp;
 
 .PHONY : clean install uninstall
 clean :
 	rm -f libizm.so izm*.o 2>/dev/null;
 
 install :
-	install -m 755 libizm.so ${PROJECTROOT_DPATH}/lib/libizm.so;
+	install -m 755 libizm.so ${FORKEXEC}/lib/libizm.so;
 
 uninstall :
-	rm -f ${PROJECTROOT_DPATH}/lib/libizm.so 2>/dev/null;
+	rm -f ${FORKEXEC}/lib/libizm.so 2>/dev/null;

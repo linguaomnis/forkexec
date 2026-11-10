@@ -9,16 +9,46 @@
 #include <limits.h>
 #include <math.h>
 
-#define IZM_OK       (0)
-#define IZM_NG       (1)
-#define IZM_ERROR    (2)
-#define IZM_NONE     (3)
-#define IZM_END      (4)
+#define IZM_FALSE   (0)
+#define IZM_TRUE    (1)
+#define IZM_OK      (2)
+#define IZM_NG      (3)
+#define IZM_ERROR   (4)
+#define IZM_NONE    (5)
+#define IZM_END     (6)
 
 /*============================================================*/
 /* IZMMATH                                                    */
 /*============================================================*/
 double izmmath_fmod2( double x, double y );
+
+/*============================================================*/
+/* IZMVECTOR                                                  */
+/*============================================================*/
+typedef struct {
+    size_t  length;
+    size_t  alloclength;
+    size_t  unitsize;
+    void*   p;
+} IZMVECTOR;
+
+/* ベクタ _vp が初期化済みかを検査する。 */
+/* return : IZM_TRUE(init), IZM_FALSE(not init), IZM_ERROR(error) */
+unsigned char izmvector_isinit( const IZMVECTOR* _vp );
+
+/* ベクタ _vp を初期化する。 */
+/* 確保されている領域があった場合、開放する。 */
+void izmvector_init( IZMVECTOR* _vp, const size_t _unitsize );
+
+/* ベクタ _vp の内容をクリアする。 */
+/* 確保されている領域は維持し、未使用領域として再利用される。 */
+void izmvector_clear( IZMVECTOR* _vp );
+
+void* izmvector_at( const IZMVECTOR* _vp, const size_t _index );
+
+unsigned char izmvector_insert( IZMVECTOR* _vp, const size_t _index, const void* _data );
+
+unsigned char izmvector_remove( IZMVECTOR* _vp, const size_t _index );
 
 /*============================================================*/
 /* IZMSTR                                                     */
@@ -45,7 +75,7 @@ unsigned char izmstr_replace(
     const size_t _strbufsize,
     const size_t _offset,
     const size_t _length,
-    const const char* _replace,
+    const char* _replace,
     const size_t _replacelength
 );
 
@@ -53,6 +83,12 @@ unsigned char izmstr_remove(
     char* _strbuf,
     const size_t _strbufsize,
     const size_t _offset,
+    const size_t _length
+);
+
+unsigned char izmstr_remove_head(
+    char* _strbuf,
+    const size_t _strbufsize,
     const size_t _length
 );
 
@@ -66,17 +102,25 @@ unsigned char izmstr_insert(
     char* _strbuf,
     const size_t _strbufsize,
     const size_t _offset,
-    const const char* _insert,
-    const size_t _insertsize
+    const char* _insert,
+    const size_t _insertlength
+);
+
+unsigned char izmstr_insert_head(
+    char* _strbuf,
+    const size_t _strbufsize,
+    const char* _insert,
+    const size_t _insertlength
 );
 
 unsigned char izmstr_insert_back(
     char* _strbuf,
     const size_t _strbufsize,
-    const const char* _insert,
-    const size_t _insertsize
+    const char* _insert,
+    const size_t _insertlength
 );
 
+#if 0
 /* 全体マッチ1個と()グループのマッチ数を足した数の上限 */
 #define IZMSTR_REGEXMATCH_MAXMATCH          (16)
 #define IZMSTR_REGEXMATCH_SUBMATCH_MAXSIZE  (PATH_MAX)
@@ -97,14 +141,14 @@ typedef struct _IZMSTR_REGEXMATCH {
 /* ()グループのマッチ数が多すぎる場合、 stat_comp に REG_ESPACE が入る */
 unsigned char izmstr_regexmatch(
     const char* _pattern,
-    const char* _strbuf,
+    const char* _str,
     IZMSTR_REGEXMATCH* _regexmatch
 );
 
 /* 最初にマッチした1箇所を文字列 _replace で置換する。 */
 /* return : IZM_OK, IZM_ERROR (error) */
 /* 置換した数が0回でも、エラーでなければ IZM_OK を返す。 */
-/* _pattern の()グループに対する _replace のキャプチャ\\1,\\2,..が使用可能。 */
+/* _pattern の()グループに対する _replace のキャプチャ$1,$2,..が使用可能。 */
 /* ただし全体マッチ1個とあわせて最大 IZMSTR_REGEXMATCH_MAXMATCH 個まで。 */
 unsigned char izmstr_regexreplace(
     const char* _pattern,
@@ -116,7 +160,7 @@ unsigned char izmstr_regexreplace(
 /* マッチした全箇所を文字列 _replace で置換する。 */
 /* return : IZM_OK, IZM_ERROR (error) */
 /* 置換した数が0回でも、エラーでなければ IZM_OK を返す。 */
-/* _pattern の()グループに対する _replace のキャプチャ\\1,\\2,..が使用可能。 */
+/* _pattern の()グループに対する _replace のキャプチャ$1,$2,..が使用可能。 */
 /* ただし全体マッチ1個とあわせて最大 IZMSTR_REGEXMATCH_MAXMATCH 個まで。 */
 unsigned char izmstr_regexreplace_global(
     const char* _pattern,
@@ -125,20 +169,24 @@ unsigned char izmstr_regexreplace_global(
     const char* _replace
 );
 
-/*============================================================*/
-/* IZMVECTOR                                                  */
-/*============================================================*/
-typedef struct {
-    size_t  length;
-    size_t  alloclength;
-    size_t  unitsize;
-    void*   p;
-} IZMVECTOR;
+char* izmstr_decode_literal(
+    char* _strbuf,
+    const size_t _strbufsize
+);
 
-void izmvector_init( IZMVECTOR* _vp, size_t _unitsize );
-void* izmvector_at( IZMVECTOR* _vp, size_t _index );
-unsigned char izmvector_insert( IZMVECTOR* _vp, size_t _index, void* _data );
-unsigned char izmvector_remove( IZMVECTOR* _vp, size_t _index );
+/* _force = 1 : 空白の有無に関わらず両端に '"' をつける。 */
+/*        = 0 : 空白がなければ両端に '"' をつけない。 */
+char* izmstr_encode_literal(
+    char* _strbuf,
+    const size_t _strbufsize,
+    const unsigned char _force
+);
+
+unsigned char izmstr_split(
+    const char* _str,
+    IZMVECTOR* _strlist
+);
+#endif
 
 /*============================================================*/
 /* IZMWAV                                                     */
