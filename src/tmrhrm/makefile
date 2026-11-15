@@ -1,5 +1,6 @@
 LINK_OPT= \
 	-L../libizm -lizm \
+	-lcrypto \
 	-lm
 
 COMPILE_OPT= \
@@ -24,7 +25,7 @@ HEADER= \
 all : tmrhrm
 
 tmrhrm : ${OBJ}
-	gcc ${LINK_OPT} -o tmrhrm ${OBJ};
+	gcc -o tmrhrm ${OBJ} ${LINK_OPT};
 
 tmrhrm.o : tmrhrm.c ${HEADER}
 	gcc -c ${COMPILE_OPT} -o tmrhrm.o tmrhrm.c;

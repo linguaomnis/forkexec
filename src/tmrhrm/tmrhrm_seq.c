@@ -145,7 +145,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
             continue;
         }
 
-        // fprintf( stdout, "DEBUG : linenum[%d] tokennum[%d] : ", linenum, tokennum );
+        // fprintf( stdout, "DEBUG : linenum[%ld] tokennum[%d] : ", linenum, tokennum );
         // for( size_t i = 0; i < 8; i++ )
         // {
         //     fprintf( stdout, "[%s]", token[i] == NULL ? "(null)" : token[i] );
@@ -156,7 +156,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 2 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -170,7 +170,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 2 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -185,7 +185,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 2 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -200,7 +200,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 2 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -215,7 +215,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 3 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -235,7 +235,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
             }else if( strcmp( token[2], "SQUARE" ) == 0 ){
                 type = OSC_TYPE_SQUARE;
             }else{
-                fprintf( stderr, "error : %s:%d : unknown oscillator type : %s\n",
+                fprintf( stderr, "error : %s:%ld : unknown oscillator type : %s\n",
                             _fpath, linenum, token[1] );
                 fclose( fp );
                 return( SONG_NG );
@@ -252,7 +252,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 3 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -272,7 +272,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 6 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -323,7 +323,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 6 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -381,7 +381,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         {
             if( tokennum != 3 )
             {
-                fprintf( stderr, "error : %s:%d : invalid argnum\n",
+                fprintf( stderr, "error : %s:%ld : invalid argnum\n",
                             _fpath, linenum );
                 fclose( fp );
                 return( SONG_NG );
@@ -414,7 +414,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
             {
                 if( token[0][i] != '>' )
                 {
-                    fprintf( stderr, "error : %s:%d : invalid speed indicator : %s\n",
+                    fprintf( stderr, "error : %s:%ld : invalid speed indicator : %s\n",
                                 _fpath, linenum, token[i] );
                     fclose( fp );
                     return( SONG_NG );
@@ -469,7 +469,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
 
                     if( frequency == 0 )
                     {
-                        fprintf( stderr, "error : %s:%d : invalid note : %s\n",
+                        fprintf( stderr, "error : %s:%ld : invalid note : %s\n",
                                     _fpath, linenum, token[i] );
                         fclose( fp );
                         return( SONG_NG );
@@ -511,7 +511,7 @@ unsigned char song_init( SONG* _p, const char* _fpath )
         }
         else
         {
-            fprintf( stderr, "error : %s:%d : unknown control : %s\n",
+            fprintf( stderr, "error : %s:%ld : unknown control : %s\n",
                         _fpath, linenum, token[0] );
             fclose( fp );
             return( SONG_NG );
