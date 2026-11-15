@@ -1,0 +1,116 @@
+#!/bin/bash
+
+PROGNAME=$(basename $0);
+CONF="${FORKEXEC}/etc/hkrup.conf";
+EXT_PTN="(jpg|JPG|jpeg|JPEG|png|PNG|bmp|BMP|gif|GIF)";
+URL_ROOT=$(     awk '$1 == "url_root"   {print $2}' ${CONF} );
+DIR_ROOT=$(     awk '$1 == "dir_root"   {print $2}' ${CONF} );
+DIR_ORG=$(      awk '$1 == "dir_org"    {print $2}' ${CONF} );
+DIR_CACHE=$(    awk '$1 == "dir_cache"  {print $2}' ${CONF} );
+LOG_WATCH=$(    awk '$1 == "log_watch"  {print $2}' ${CONF} );
+LOG=$(          awk '$1 == "log"        {print $2}' ${CONF} );
+LOG_REP=$(      awk '$1 == "log_rep"    {print $2}' ${CONF} );
+USER=$(         awk '$1 == "user"       {print $2}' ${CONF} );
+PASS=$(         awk '$1 == "pass"       {print $2}' ${CONF} );
+NULL="__NULL__";
+
+function _def ()
+{
+cat <<DOC
+org     ${DIR_ROOT}/${DIR_ORG}
+h100    ${DIR_CACHE}/h100
+h200    ${DIR_CACHE}/h200
+h500    ${DIR_CACHE}/h500
+w100    ${DIR_CACHE}/w100
+w200    ${DIR_CACHE}/w200
+w500    ${DIR_CACHE}/w500
+DOC
+}
+
+ALLID=$( hkrupbase | sed -E "/^\s*(#|$)/d" | awk '{print $1}' | sort | uniq );
+BASE=$( hkrupbase | sed -E "/^\s*(#|$)/d" );
+
+printf "# id ext fname";
+_def | awk '{ printf( " path_%s", $1); }';
+printf "\n";
+
+# id ext fname path cache
+
+echo "${BASE}" | awk '{print $1}' | sort | uniq \
+| join - \
+    -a 1 -a 2 \
+    -1 1 -2 1 \
+    -o 0 2.2 2.3 2.4 \
+    -e "${NULL}" \
+    <( echo "${BASE}" | awk '$5 == "org" {print $0}' | sort ) \
+| join - \
+    -a 1 -a 2 \
+    -1 1 -2 1 \
+    -o 0 1.2 1.3 1.4 2.4 \
+    -e "${NULL}" \
+    <( echo "${BASE}" | awk '$5 == "h100" {print $0}' | sort ) \
+| join - \
+    -a 1 -a 2 \
+    -1 1 -2 1 \
+    -o 0 1.2 1.3 1.4 1.5 2.4 \
+    -e "${NULL}" \
+    <( echo "${BASE}" | awk '$5 == "h200" {print $0}' | sort ) \
+| join - \
+    -a 1 -a 2 \
+    -1 1 -2 1 \
+    -o 0 1.2 1.3 1.4 1.5 1.6 2.4 \
+    -e "${NULL}" \
+    <( echo "${BASE}" | awk '$5 == "h500" {print $0}' | sort ) \
+| join - \
+    -a 1 -a 2 \
+    -1 1 -2 1 \
+    -o 0 1.2 1.3 1.4 1.5 1.6 1.7 2.4 \
+    -e "${NULL}" \
+    <( echo "${BASE}" | awk '$5 == "w100" {print $0}' | sort ) \
+| join - \
+    -a 1 -a 2 \
+    -1 1 -2 1 \
+    -o 0 1.2 1.3 1.4 1.5 1.6 1.7 1.8 2.4 \
+    -e "${NULL}" \
+    <( echo "${BASE}" | awk '$5 == "w200" {print $0}' | sort ) \
+| join - \
+    -a 1 -a 2 \
+    -1 1 -2 1 \
+    -o 0 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.4 \
+    -e "${NULL}" \
+    <( echo "${BASE}" | awk '$5 == "w500" {print $0}' | sort ) \
+| awk -v _null="${NULL}" '
+    {
+        _id         = $1;
+        _ext        = $2;
+        _fname      = $3;
+        _path_org   = $4;
+        _path_h100  = $5;
+        _path_h200  = $6;
+        _path_h500  = $7;
+        _path_w100  = $8;
+        _path_w200  = $9;
+        _path_w500  = $10;
+
+        for ( i = 5; i <= 10; i++ ) {
+            if ( _id != _null && _ext != _null && _fname != _null ) {
+                break;
+            }
+            if ( $i == _null ) {
+                continue;
+            }
+            _path   = $i;
+            _fname  = gensub( "^.*/", "", "g", _path );
+            _id     = gensub( "[.][0-9a-zA-Z]+$", "", "g", _fname );
+            _ext    = gensub( "^.*[.]", "", "g", _fname );
+        }
+
+        printf( \
+            "%s %s %s %s %s %s %s %s %s %s\n", \
+            _id, _ext, _fname, _path_org, \
+            _path_h100, _path_h200, _path_h500, \
+            _path_w100, _path_w200, _path_w500 \
+        );
+    }
+' \
+;

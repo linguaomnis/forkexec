@@ -1,0 +1,113 @@
+#!/bin/bash
+
+LIBIZM="${FORKEXEC}/lib/libizm.sh";
+PROGNAME=$(basename $0);
+CONF="${FORKEXEC}/etc/hkrup.conf";
+EXT_PTN="(jpg|JPG|jpeg|JPEG|png|PNG|bmp|BMP|gif|GIF)";
+URL_ROOT=$(     awk '$1 == "url_root"   {print $2}' ${CONF} );
+DIR_ROOT=$(     awk '$1 == "dir_root"   {print $2}' ${CONF} );
+DIR_ORG=$(      awk '$1 == "dir_org"    {print $2}' ${CONF} );
+DIR_CACHE=$(    awk '$1 == "dir_cache"  {print $2}' ${CONF} );
+LOG_WATCH=$(    awk '$1 == "log_watch"  {print $2}' ${CONF} );
+LOG=$(          awk '$1 == "log"        {print $2}' ${CONF} );
+LOG_REP=$(      awk '$1 == "log_rep"    {print $2}' ${CONF} );
+USER=$(         awk '$1 == "user"       {print $2}' ${CONF} );
+PASS=$(         awk '$1 == "pass"       {print $2}' ${CONF} );
+
+. ${LIBIZM};
+
+function _findfiletorename ()
+{
+    FPATH="$1";
+
+    find "${FPATH}" -maxdepth 1 -type f \
+    | grep -E ".${EXT_PTN}$" \
+    | sed -E "s/^.*\///g" \
+    | grep -vE "^[0-9]{14}\.${EXT_PTN}$" \
+    ;
+}
+
+function _rename ()
+{
+    RET=0;
+
+    while read FNAME_PRE; do
+
+        EXT=$( echo "${FNAME_PRE}" | grep -Eo "\.[0-9a-zA-Z]+$" );
+        FNAME_PST=$( date +"%Y%m%d%H%M%S" )"${EXT}";
+        URL_PRE="${URL_ROOT}/${DIR_ORG}/${FNAME_PRE}";
+        URL_PST="${URL_ROOT}/${DIR_ORG}/${FNAME_PST}";
+
+        curl \
+            -u "${USER}:${PASS}" \
+            -X MOVE \
+            --header "Destination: ${URL_PST}" \
+            "${URL_PRE}" \
+        ;
+
+        ${LOG_REP} ${LOG} "rename ${FNAME_PRE} > ${FNAME_PST}";
+
+        sleep 1.1;
+
+        RET=1;
+
+    done < <( _findfiletorename "${DIR_ROOT}/${DIR_ORG}" );
+
+    return ${RET};
+}
+
+function _cache ()
+{
+    OUT=$( yes | hkrupupdate 2>&1 );
+    ${LOG_REP} ${LOG} "${OUT}";
+}
+
+function _start ()
+{
+    ${LOG_REP} ${LOG} ">> BEGIN";
+    ${LOG_REP} ${LOG} "LOG_WATCH : ${LOG_WATCH}";
+    ${LOG_REP} ${LOG} "URL_ROOT  : ${URL_ROOT}";
+    ${LOG_REP} ${LOG} "DIR_ROOT  : ${DIR_ROOT}";
+    ${LOG_REP} ${LOG} "DIR_ORG   : ${DIR_ORG}";
+}
+
+function _loop ()
+{
+    
+    while true; do
+    
+        while true; do
+    
+            sleep 3;
+    
+            _rename;
+    
+            if [[ $? == 0 ]]; then
+                _cache;
+                break;
+            fi
+    
+        done;
+    
+        ${LOG_REP} ${LOG} "wait update ...";
+        # tail -n0 -F "${LOG_WATCH}" | grep "" -m 1 >/dev/null 2>/dev/null;
+        TIME_BASE=$(stat -c "%Y" "${LOG_WATCH}");
+        while true; do
+            TIME=$(stat -c "%Y" "${LOG_WATCH}");
+            if [[ "${TIME}" != "${TIME_BASE}" ]]; then
+                break;
+            fi
+            sleep 1;
+        done;
+        ${LOG_REP} ${LOG} "catch!";
+    
+    done;
+}
+
+function _end ()
+{
+    ${LOG_REP} ${LOG} "<< END";
+}
+
+lizm_daemon "__${PROGNAME}__" _start _loop _end $@;
+
