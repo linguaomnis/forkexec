@@ -1,0 +1,109 @@
+#!/bin/perl
+use strict;
+use warnings;
+use utf8;
+use Encode;
+use Data::Dumper;
+use Mik::Mik2;
+my $confpath = "$ENV{'FORKEXEC'}/etc/izmMd2Html.conf";
+
+sub _conf( $ )
+{
+    ( my $_confpath ) = @_;
+    my %_conf;
+    open( FH, "<" . $_confpath ) or return( %_conf );
+
+    while( my $_line = <FH> ) {
+        $_line =~ s/^\s*|\s*$|#.*//g;
+        $_line !~ /^\s*$/ or next;
+
+        my @_def = split( /\s+/, $_line );
+        scalar( @_def ) == 2 or next;
+
+        $_conf{ $_def[0] } = $_def[1];
+
+        $_conf{ $_def[0] } =~ s/%space%/ /g;
+    }
+
+    return( %_conf );
+}
+
+my %conf = _conf( $confpath );
+
+if( not exists( $conf{'hkrup_original_url'} )
+ or not exists( $conf{'hkrup_thumb_url'} )
+) {
+    if( open( FILE, "> /tmp/izmMd2Html.log" ) )
+    {
+        printf FILE ( "error : conf read failed : \$confpath[${confpath}]\n" );
+    }
+    close( FILE );
+    exit( 0 ); 
+}
+
+open( OUT, "| pandoc | sed -E 's/embed/img/g' | sed -E 's/width:[[:blank:]]*[0-9]+%/width:auto/g'" ) or die $!;
+
+while( <STDIN> )
+{
+    my $line = decode_utf8( $_ );
+    $line =~ s/\n//g;
+
+    my $chg = 0;
+
+    my @lineTok = split( /\s+/, $line );
+    
+    if( defined( $lineTok[0] ) && $lineTok[0] eq "!lexico" )
+    {
+        printf( OUT "<!-- %s -->\n", encode_utf8( $line ) );
+        $chg = 1;
+    }
+
+    if( defined( $lineTok[0] ) && $lineTok[0] eq "!title" )
+    {
+        printf( OUT "<!-- %s -->\n", encode_utf8( $line ) );
+        $chg = 1;
+    }
+
+    if( defined( $lineTok[0] ) && $lineTok[0] eq "!thumb" )
+    {
+        printf( OUT "<!-- %s -->\n", encode_utf8( $line ) );
+        $chg = 1;
+    }
+
+    if( defined( $lineTok[0] ) && $lineTok[0] eq "!hkrup" )
+    {
+        my $id  = $lineTok[1];
+        my $opt = $lineTok[2];
+
+        printf( OUT "<a href=\"https://$conf{'hkrup_original_url'}\">", encode_utf8( $id ) );
+
+        if( $opt eq "blur" )
+        {
+            printf( OUT "<img class=\"blur\" src=\"https://$conf{'hkrup_thumb_url'}\">", encode_utf8( $id ) );
+        }else{
+            printf( OUT "<img src=\"https://$conf{'hkrup_thumb_url'}\">", encode_utf8( $id ) );
+        }
+        printf( OUT "</a>" );
+        printf( OUT "\n" );
+
+        $chg = 1;
+    }
+
+    if( $line =~ /^\s*;;/ )
+    {
+        # comment line
+        $chg = 1;
+    }
+
+    $line = Mik::Mik2::translit( $line, undef );
+
+    if( $chg == 0 )
+    {
+        printf( OUT "%s\n", encode_utf8( $line ) );
+    }
+}
+
+close( OUT );
+
+
+
