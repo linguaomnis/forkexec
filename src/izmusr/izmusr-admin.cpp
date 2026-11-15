@@ -10,6 +10,7 @@ static void _usage( void )
     fprintf( stdout, "    izmusr-admin show-userinfo-location-by-username <username>\n" );
     fprintf( stdout, "    izmusr-admin show-userinfo-url-by-username <username>\n" );
     fprintf( stdout, "    izmusr-admin show-userinfo-about-by-username <username>\n" );
+    fprintf( stdout, "    izmusr-admin show-userinfo-icon-by-username <username>\n" );
     fprintf( stdout, "    izmusr-admin show-userinfo-by-userid <userid>\n" );
     fprintf( stdout, "    izmusr-admin show-userinfo-by-username <username>\n" );
     fprintf( stdout, "    izmusr-admin show-userinfo-all\n" );
@@ -28,6 +29,8 @@ static void _usage( void )
     fprintf( stdout, "    izmusr-admin change-url-by-username <username> <url-new>\n" );
     fprintf( stdout, "    izmusr-admin change-about-by-userid <userid> <about-new>\n" );
     fprintf( stdout, "    izmusr-admin change-about-by-username <username> <about-new>\n" );
+    fprintf( stdout, "    izmusr-admin change-icon-by-userid <userid> <icon-new>\n" );
+    fprintf( stdout, "    izmusr-admin change-icon-by-username <username> <icon-new>\n" );
     fprintf( stdout, "    izmusr-admin get-passwordhash <password>\n" );
     fprintf( stdout, "    izmusr-admin init-db\n" );
     fprintf( stdout, "    \n" );
@@ -189,6 +192,34 @@ int main( const int argc, const char** argv )
 
         return( IZMUSR_OK );
     }
+    else if( strcmp( subcommand, "show-userinfo-icon-by-username" ) == 0 )
+    {
+        if( argc != 3 )
+        {
+            _usage();
+            return( IZMUSR_ERROR );
+        }
+
+        const char* username = argv[2];
+
+        IZMUSR_USERINFO_DB db = {};
+        if( izmusr_load_db( &db, _get_fpath_db() ) != IZM_OK )
+        {
+            fprintf( stderr, "error : database load failed\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        const IZMUSR_USERINFO* user = izmusr_search_user_by_username( &db, username );
+        if( user == NULL )
+        {
+            fprintf( stderr, "error : user not found\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        fprintf( stdout, "%s" , user->icon );
+
+        return( IZMUSR_OK );
+    }
     else if( strcmp( subcommand, "show-userinfo-by-userid" ) == 0 )
     {
         if( argc != 3 )
@@ -222,10 +253,10 @@ int main( const int argc, const char** argv )
         fprintf( stdout,
                 "USERID[%d]\n" "USERNAME[%s]\n" "PASSWORDHASH[%s]\n"
                 "DISPNAME[%s]\n" "LOCATION[%s]\n" "URL[%s]\n"
-                "ABOUT[%s]\n"
+                "ABOUT[%s] ICON[%s]\n"
                 , user->userid , user->username , user->passwordhash
                 , user->dispname , user->location , user->url
-                , user->about
+                , user->about, user->icon
             );
 
         return( IZMUSR_OK );
@@ -257,10 +288,10 @@ int main( const int argc, const char** argv )
         fprintf( stdout,
                 "USERID[%d]\n" "USERNAME[%s]\n" "PASSWORDHASH[%s]\n"
                 "DISPNAME[%s]\n" "LOCATION[%s]\n" "URL[%s]\n"
-                "ABOUT[%s]\n"
+                "ABOUT[%s] ICON[%s]\n"
                 , user->userid , user->username , user->passwordhash
                 , user->dispname , user->location , user->url
-                , user->about
+                , user->about, user->icon
             );
 
         return( IZMUSR_OK );
@@ -877,6 +908,77 @@ int main( const int argc, const char** argv )
         if( izmusr_change_about_by_username( &db, username, about_new ) != IZM_OK )
         {
             fprintf( stderr, "error : change about failed\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        if( izmusr_save_db( &db, _get_fpath_db() ) != IZM_OK )
+        {
+            fprintf( stderr, "error : database save failed\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        return( IZMUSR_OK );
+    }
+    else if( strcmp( subcommand, "change-icon-by-userid" ) == 0 )
+    {
+        if( argc != 4 )
+        {
+            _usage();
+            return( IZMUSR_ERROR );
+        }
+
+        char* endptr = NULL;
+        const int userid = strtol( argv[2], &endptr, 10 );
+        if( argv[2][0] != '\0' && *endptr != '\0' )
+        {
+            fprintf( stderr, "error : invalid userid\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        const char* icon_new = argv[3];
+
+        IZMUSR_USERINFO_DB db = {};
+        if( izmusr_load_db( &db, _get_fpath_db() ) != IZM_OK )
+        {
+            fprintf( stderr, "error : database load failed\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        if( izmusr_change_icon_by_userid( &db, userid, icon_new ) != IZM_OK )
+        {
+            fprintf( stderr, "error : change icon failed\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        if( izmusr_save_db( &db, _get_fpath_db() ) != IZM_OK )
+        {
+            fprintf( stderr, "error : database save failed\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        return( IZMUSR_OK );
+    }
+    else if( strcmp( subcommand, "change-icon-by-username" ) == 0 )
+    {
+        if( argc != 4 )
+        {
+            _usage();
+            return( IZMUSR_ERROR );
+        }
+
+        const char* username = argv[2];
+        const char* icon_new = argv[3];
+
+        IZMUSR_USERINFO_DB db = {};
+        if( izmusr_load_db( &db, _get_fpath_db() ) != IZM_OK )
+        {
+            fprintf( stderr, "error : database load failed\n" );
+            return( IZMUSR_ERROR );
+        }
+
+        if( izmusr_change_icon_by_username( &db, username, icon_new ) != IZM_OK )
+        {
+            fprintf( stderr, "error : change icon failed\n" );
             return( IZMUSR_ERROR );
         }
 

@@ -64,6 +64,9 @@ char* izmmath_get_md5( const char* _data, size_t _size );
 #define IZMUSR_ABOUT_MINLEN         (0)
 #define IZMUSR_ABOUT_MAXLEN         (1024)
 #define IZMUSR_ABOUT_SIZE           (IZMUSR_ABOUT_MAXLEN + 8)
+#define IZMUSR_ICON_MINLEN          (14)
+#define IZMUSR_ICON_MAXLEN          (14)
+#define IZMUSR_ICON_SIZE            (IZMUSR_ICON_MAXLEN + 2)
 #define IZMUSR_DUMMY_SIZE           (2048 - ( \
                                         + sizeof(int) \
                                         + sizeof(int) \
@@ -73,6 +76,7 @@ char* izmmath_get_md5( const char* _data, size_t _size );
                                         + IZMUSR_LOCATION_SIZE \
                                         + IZMUSR_URL_SIZE \
                                         + IZMUSR_ABOUT_SIZE \
+                                        + IZMUSR_ICON_SIZE \
                                     ) )
 
 typedef struct _IZMUSR_USERINFO {
@@ -84,6 +88,7 @@ typedef struct _IZMUSR_USERINFO {
     char    location[IZMUSR_LOCATION_SIZE];
     char    url[IZMUSR_URL_SIZE];
     char    about[IZMUSR_ABOUT_SIZE];
+    char    icon[IZMUSR_ICON_SIZE];
     char    dummy[IZMUSR_DUMMY_SIZE];
 } IZMUSR_USERINFO;
 
@@ -107,6 +112,7 @@ unsigned char izmusr_check_dispname( const char* _dispname );
 unsigned char izmusr_check_location( const char* _location );
 unsigned char izmusr_check_url( const char* _url );
 unsigned char izmusr_check_about( const char* _about );
+unsigned char izmusr_check_icon( const char* _icon );
 IZMUSR_USERINFO* izmusr_find_user_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid );
 const IZMUSR_USERINFO* izmusr_search_user_by_userid( const IZMUSR_USERINFO_DB* _db, const int _userid );
 IZMUSR_USERINFO* izmusr_find_user_by_username( IZMUSR_USERINFO_DB* _db, const char* _username );
@@ -132,6 +138,8 @@ unsigned char izmusr_change_url_by_userid( IZMUSR_USERINFO_DB* _db, const int _u
 unsigned char izmusr_change_url_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _url_new );
 unsigned char izmusr_change_about_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _about_new );
 unsigned char izmusr_change_about_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _about_new );
+unsigned char izmusr_change_icon_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _icon_new );
+unsigned char izmusr_change_icon_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _icon_new );
 const char* izmusr_get_passwordhash( const char* _password, char* _passwordhash );
 unsigned char izmusr_init_db( IZMUSR_USERINFO_DB* _db );
 

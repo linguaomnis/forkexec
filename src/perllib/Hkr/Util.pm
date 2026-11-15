@@ -25,7 +25,7 @@ sub get_userinfo( $ )
         , "location"        => ""
         , "url"             => ""
         , "about"           => ""
-        , "icon_path"       => "icon.png"
+        , "icon"    => ""
     );
 
     if( ! defined( $username ) )
@@ -85,11 +85,24 @@ sub get_userinfo( $ )
     }
     close( PIPE );
 
+    my $icon = "";
+    if( ! open( PIPE, "-|", "izmusr show-userinfo-icon-by-username $username" ) )
+    {
+        return( %userinfo );
+    }
+    while( <PIPE> )
+    {
+        $icon = $_;
+        last;
+    }
+    close( PIPE );
+
     $userinfo{"username"} = $username;
     $userinfo{"dispname"} = $dispname;
     $userinfo{"location"} = $location;
     $userinfo{"url"} = $url;
     $userinfo{"about"} = $about;
+    $userinfo{"icon"} = $icon;
 
     return( %userinfo );
 }

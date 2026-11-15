@@ -269,6 +269,33 @@ unsigned char izmusr_check_about( const char* _about )
 };
 
 extern "C"
+unsigned char izmusr_check_icon( const char* _icon )
+{
+    if( _icon == NULL )
+        return( IZM_ERROR );
+
+    if( izmstr_check_nullterm( _icon, IZMUSR_ICON_SIZE ) != IZM_OK )
+        return( IZM_ERROR );
+
+    if( strlen( _icon ) < IZMUSR_ICON_MINLEN || IZMUSR_ICON_MAXLEN < strlen( _icon ) )
+        return( IZM_ERROR );
+
+    int i = 0;
+
+    for( i = 0; i < strlen( _icon ); i++ )
+    {
+        const char c = _icon[i];
+
+        if( '0' <= c && c <= '9' )
+            continue;
+
+        return( IZM_ERROR );
+    }
+
+    return( IZM_OK );
+};
+
+extern "C"
 IZMUSR_USERINFO* izmusr_find_user_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid )
 {
     if( _db == NULL )
@@ -832,7 +859,7 @@ unsigned char izmusr_change_dispname_by_username( IZMUSR_USERINFO_DB* _db, const
         return( IZM_ERROR );
     }
 
-    if( izmusr_check_dispname( _username ) != IZM_OK )
+    if( izmusr_check_username( _username ) != IZM_OK )
     {
         fprintf( stderr, "error : izmusr_change_dispname_by_username : _check_dispname failed : invalid username\n" );
         return( IZM_ERROR );
@@ -904,7 +931,7 @@ unsigned char izmusr_change_location_by_username( IZMUSR_USERINFO_DB* _db, const
         return( IZM_ERROR );
     }
 
-    if( izmusr_check_location( _username ) != IZM_OK )
+    if( izmusr_check_username( _username ) != IZM_OK )
     {
         fprintf( stderr, "error : izmusr_change_location_by_username : _check_location failed : invalid username\n" );
         return( IZM_ERROR );
@@ -976,7 +1003,7 @@ unsigned char izmusr_change_url_by_username( IZMUSR_USERINFO_DB* _db, const char
         return( IZM_ERROR );
     }
 
-    if( izmusr_check_url( _username ) != IZM_OK )
+    if( izmusr_check_username( _username ) != IZM_OK )
     {
         fprintf( stderr, "error : izmusr_change_url_by_username : _check_url failed : invalid username\n" );
         return( IZM_ERROR );
@@ -1048,7 +1075,7 @@ unsigned char izmusr_change_about_by_username( IZMUSR_USERINFO_DB* _db, const ch
         return( IZM_ERROR );
     }
 
-    if( izmusr_check_about( _username ) != IZM_OK )
+    if( izmusr_check_username( _username ) != IZM_OK )
     {
         fprintf( stderr, "error : izmusr_change_about_by_username : _check_about failed : invalid username\n" );
         return( IZM_ERROR );
@@ -1071,6 +1098,78 @@ unsigned char izmusr_change_about_by_username( IZMUSR_USERINFO_DB* _db, const ch
     memset( user->about, 0x0, sizeof(user->about) );
 
     strcpy( user->about, _about_new );
+
+    return( IZM_OK );
+};
+
+extern "C"
+unsigned char izmusr_change_icon_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _icon_new )
+{
+    if( _db == NULL )
+    {
+        fprintf( stderr, "error : izmusr_change_icon_by_userid : _db : NULL\n" );
+        return( IZM_ERROR );
+    }
+
+    if( izmusr_check_userid( _userid ) != IZM_OK )
+    {
+        fprintf( stderr, "error : izmusr_change_icon_by_userid : _check_userid failed : invalid userid\n" );
+        return( IZM_ERROR );
+    }
+
+    if( izmusr_check_icon( _icon_new ) != IZM_OK )
+    {
+        fprintf( stderr, "error : izmusr_change_icon_by_userid : _check_icon failed : invalid new icon\n" );
+        return( IZM_ERROR );
+    }
+
+    IZMUSR_USERINFO* user = NULL;
+
+    if( ( user = izmusr_find_user_by_userid( _db, _userid ) ) == NULL )
+    {
+        fprintf( stderr, "error : izmusr_change_icon_by_userid : user not found\n" );
+        return( IZM_ERROR );
+    }
+
+    memset( user->icon, 0x0, sizeof(user->icon) );
+
+    strcpy( user->icon, _icon_new );
+
+    return( IZM_OK );
+};
+
+extern "C"
+unsigned char izmusr_change_icon_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _icon_new )
+{
+    if( _db == NULL )
+    {
+        fprintf( stderr, "error : izmusr_change_icon_by_username : _db : NULL\n" );
+        return( IZM_ERROR );
+    }
+
+    if( izmusr_check_username( _username ) != IZM_OK )
+    {
+        fprintf( stderr, "error : izmusr_change_icon_by_username : _check_icon failed : invalid username\n" );
+        return( IZM_ERROR );
+    }
+
+    if( izmusr_check_icon( _icon_new ) != IZM_OK )
+    {
+        fprintf( stderr, "error : izmusr_change_icon_by_username : _check_icon failed : invalid new icon\n" );
+        return( IZM_ERROR );
+    }
+
+    IZMUSR_USERINFO* user = NULL;
+
+    if( ( user = izmusr_find_user_by_username( _db, _username ) ) == NULL )
+    {
+        fprintf( stderr, "error : izmusr_change_icon_by_username : user not found\n" );
+        return( IZM_ERROR );
+    }
+
+    memset( user->icon, 0x0, sizeof(user->icon) );
+
+    strcpy( user->icon, _icon_new );
 
     return( IZM_OK );
 };
