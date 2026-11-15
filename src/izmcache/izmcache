@@ -1,0 +1,237 @@
+#!/bin/bash
+
+CONFFILE="${FORKEXEC}/etc/izmcache.conf";
+PROG=$(basename ${0});
+RET_OK=0;
+RET_NG=1;
+RET_NOTHING=2;
+# DEBUG="/dev/stderr";
+DEBUG="/dev/null";
+CONF="";
+DEF="";
+MAKEFILE="";
+OPT_CLEAN=0;
+MAKE_MAXDEPTH=10;
+
+function _usage ()
+{
+cat <<DOC
+${PROG} [-c|--clean]
+DOC
+}
+
+function _getconf ()
+{
+    cat "${CONFFILE}" | sed -E 's/#.*//g' | sed -E '/^\s*$/d';
+}
+
+function _conf2def ()
+{
+    # IN  : make <srcdir> <srcfname_ptn> <ex_ptn> <dstdir> <dstfname_ptn> <conv>
+    # OUT : <srcfpath> <dstfpath> <conv>
+
+    sed -E 's/#.*//g' | sed -E '/^\s*$/d' | awk '$1 == "make" {print}' \
+    | while read DEF SRCDIR SRCFNAME EX DSTDIR DSTFNAME CONV DUMMY; do
+
+        SRCFPATH_PTN=$( echo "^${SRCDIR}/${SRCFNAME}$" | sed -E 's|/+|/|g' );
+    
+        > ${DEBUG} echo "${PROG} : DEBUG :" \
+            "SRCDIR[${SRCDIR}]" "SRCFNAME[${SRCFNAME}]" "EX[${EX}]" \
+            "DSTDIR[${DSTDIR}]" "DSTFNAME[${DSTFNAME}]" "CONV[${CONV}]" \
+            "SRCFPATH_PTN[${SRCFPATH_PTN}]" \
+        ;
+    
+        find "${SRCDIR}" -maxdepth 1 -type f \
+            -regextype posix-extended -regex "${SRCFPATH_PTN}" \
+        | sed -E 's|/+|/|g' \
+        | grep -vE "^.*\/${EX}$" \
+        | awk -v srcdir=${SRCDIR} -v srcfname=${SRCFNAME} -v ex=${EX} \
+              -v dstdir=${DSTDIR} -v dstfname=${DSTFNAME} -v conv=${CONV} \
+        '
+            {
+                srcfpath = $1;
+
+                srcfname_defined = gensub( /^.*\//,    "", "g", srcfpath );
+                srcfname_root    = gensub( /\.[^.]*$/, "", "g", srcfname_defined );
+                srcfname_ext     = gensub( /^.*\./,    "", "g", srcfname_defined );
+
+                dstfname_defined = dstfname;
+                dstfname_defined = gensub( /%ROOT%/, srcfname_root, "g", dstfname_defined );
+                dstfname_defined = gensub( /%EXT%/, srcfname_ext, "g", dstfname_defined );
+
+                dstfpath = sprintf( "%s/%s", dstdir, dstfname_defined );
+                dstfpath = gensub( /\/+/, "/", "g", dstfpath );
+
+                # printf( "  _getDef : debug : $0[%s]\n", $0 );
+                # printf( "  _getDef : debug : srcfpath[%s]\n", srcfpath );
+                # printf( "  _getDef : debug : srcfname_defined[%s]\n", srcfname_defined );
+                # printf( "  _getDef : debug : srcfname_root[%s]\n", srcfname_root );
+                # printf( "  _getDef : debug : srcfname_ext[%s]\n", srcfname_ext );
+                # printf( "  _getDef : debug : dstfname_defined[%s]\n", dstfname_defined );
+                # printf( "  _getDef : debug : dstfpath[%s]\n", dstfpath );
+
+                printf( "%s %s %s\n", srcfpath, dstfpath, conv );
+            }
+        ' \
+        ;
+    
+    done;
+}
+
+function _def2makefile ()
+{
+    awk '
+        BEGIN {
+            cnt = 0;
+        }
+
+        {
+            srcfpath = $1;
+            dstfpath = $2;
+            conv = $3;
+
+            _srcfpath_list[cnt] = srcfpath;
+            _dstfpath_list[cnt] = dstfpath;
+            _conv_list[cnt] = conv;
+
+            cnt++;
+        }
+
+        END {
+            printf( "all:" );
+            for( i = 0; i < cnt; i++ )
+            {
+                printf( " %s", _dstfpath_list[i] );
+            }
+            printf( "\n" );
+
+            for( i = 0; i < cnt; i++ )
+            {
+                printf( "\n" );
+                printf( "%s: %s\n", _dstfpath_list[i], _srcfpath_list[i] );
+                printf( "\tcat %s | %s > %s\n", _srcfpath_list[i], _conv_list[i], _dstfpath_list[i] );
+            }
+
+            printf( "\n" );
+            printf( ".PHONY: clean\n" );
+            printf( "clean:\n" );
+            printf( "\trm" );
+            for( i = 0; i < cnt; i++ )
+            {
+                printf( " %s", _dstfpath_list[i] );
+            }
+            printf( "\n" );
+        }
+    ' \
+    ;
+}
+
+function _gomilist ()
+{
+    DST_DESIRE=$( echo "${DEF}" | sed -E '/^\s*$/d' | awk '{print $2}' | sed -E 's|/+|/|g' | sort | uniq );    
+
+    DSTDIR_LIST=$( echo "${CONF}" | sed -E '/^\s*$/d' | awk '{print $5}' );
+    DST_REAL=$( find ${DSTDIR_LIST} -maxdepth 1 -type f | sed -E 's|/+|/|g' | sort | uniq );
+
+    > ${DEBUG} echo "DST_DESIRE >>";
+    > ${DEBUG} echo "${DST_DESIRE}";
+    > ${DEBUG} echo "<<";
+
+    > ${DEBUG} echo "DST_REAL >>";
+    > ${DEBUG} echo "${DST_REAL}";
+    > ${DEBUG} echo "<<";
+
+    diff <( echo "${DST_DESIRE}" ) <( echo "${DST_REAL}" ) \
+    | awk '
+        $1 == ">" {
+            gomi_fpath = $2;
+
+            printf( "%s\n", gomi_fpath );
+        }
+    ' \
+    ;
+}
+
+function _removeGomi ()
+{
+    GOMILIST=$( _gomilist );
+
+    echo "${GOMILIST}" | xargs -r echo "rm";
+
+    echo "${GOMILIST}" | xargs -r rm;
+}
+
+function _make ()
+{
+    CLEAN=$1;
+    MAKEFILE=$( echo "${DEF}" | _def2makefile );
+    RET=0;
+
+    echo "MAKEFILE >>" > ${DEBUG};
+    echo "${MAKEFILE}" | sed -E 's/^/> /g' > ${DEBUG};
+    echo "<<" > ${DEBUG};
+
+    if [[ ${CLEAN} == 1 ]]; then
+        OUT=$( make clean -f <( echo "${MAKEFILE}" ) );
+        echo "${OUT}";
+        RET=0;
+    else
+        OUT=$( make -f <( echo "${MAKEFILE}" ) );
+        echo "${OUT}";
+
+        case "${OUT}" in
+        *Nothing*)
+            RET=0;
+            ;;
+        *)
+            RET=1;
+            ;;
+        esac
+    fi
+
+    return ${RET};
+}
+
+while (( $# > 0 )); do
+
+    case "${1}" in
+    "-c"|"--clean")
+        OPT_CLEAN=1;
+        ;;
+    esac
+
+    shift;
+done;
+
+
+
+CONF=$( _getconf );
+
+if [[ -z "${CONF}" ]]; then
+    echo "error : open conf failed : ${CONF}" > ${DEBUG};
+    exit 1;
+fi
+
+echo "CONF >>" > ${DEBUG};
+echo "${CONF}" > ${DEBUG};
+echo "<<" > ${DEBUG};
+
+for CNT in $(seq 1 ${MAKE_MAXDEPTH}); do
+
+    DEF=$( echo "${CONF}" | _conf2def );
+
+    echo "DEF >>" > ${DEBUG};
+    echo "${DEF}" > ${DEBUG};
+    echo "<<" > ${DEBUG};
+
+    _removeGomi;
+
+    _make ${OPT_CLEAN};
+
+    if [[ $? == 0 ]]; then
+        exit 0;
+    fi
+done;
+
+echo "error : too deep make : ${CNT}" > /dev/stderr;
+exit 1;
