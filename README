@@ -1,17 +1,16 @@
 HOW TO INSTALL
 
 1.  copy whole contents of this project in your machine
-    ex.) cd ${HOME}; git clone https://github.com/linguaomnis/forkexec.git;
+    ex.) git clone https://github.com/linguaomnis/forkexec.git /opt/forkexec;
     or simply via zip
 
 2.  do "make" for this project
-    ex.) make -C ${HOME}/forkexec/src;
+    ex.) make -C /opt/forkexec/src;
 
 3.  do "make install" for this project
-    ex.) make install -C ${HOME}/forkexec/src;
+    ex.) make install -C /opt/forkexec/src;
 
-4.  add path ${HOME}/forkexec/bin to $PATH
-    and add path ${HOME}/forkexec/lib to $LD_LIBRARY_PATH
+4.  add path /opt/forkexec/bin to $PATH
     in ${HOME}.bashrc,
     ex.) open ${HOME}.bashrc to edit it
 
@@ -24,18 +23,18 @@ HOW TO INSTALL
 
         to:
         > # User specific environment
-        > export FORKEXEC="$HOME/forkexec";
+        > export FORKEXEC="/opt/forkexec";
         > if ! [[ "$PATH" =~ "$FORKEXEC/bin:$HOME/.local/bin:$HOME/bin:" ]]; then
         >     PATH="$FORKEXEC/bin:$HOME/.local/bin:$HOME/bin:$PATH"
         > fi
         > export PATH
-        > if ! [[ "$LD_LIBRARY_PATH" =~ "$FORKEXEC/lib:" ]]; then
-        >     LD_LIBRARY_PATH="$FORKEXEC/lib:$LD_LIBRARY_PATH"
-        > fi
-        > export LD_LIBRARY_PATH
+
+5.  /etc/ld.so.conf.d/forkexec.conf like that
+    ex.)
+        > # echo '/opt/forkexec/lib' > /etc/ld.so.conf.d/forkexec.conf
 
 HOW TO UNINSTALL
 
 1.  do "make uninstall" for this project
-    ex.) make uninstall -C ${HOME}/forkexec/src;
+    ex.) make uninstall -C /opt/forkexec/src;
 
