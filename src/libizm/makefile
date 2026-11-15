@@ -4,6 +4,7 @@ LINK_OPT= \
 COMPILE_OPT= \
 	-I. \
 	-Wno-pointer-arith \
+    -Wno-deprecated-declarations \
 	-fPIC \
 	-g \
 	-O0
@@ -12,6 +13,7 @@ OBJ= \
 	izmlog.o \
 	izmmath.o \
 	izmstr.o \
+	izmusr.o \
 	izmvector.o \
 	izmwav.o
 
@@ -32,6 +34,9 @@ izmmath.o : izmmath.cpp ${HEADER}
 
 izmstr.o : izmstr.cpp ${HEADER}
 	g++ -c ${COMPILE_OPT} -o izmstr.o izmstr.cpp;
+
+izmusr.o : izmusr.cpp ${HEADER}
+	g++ -c ${COMPILE_OPT} -o izmusr.o izmusr.cpp;
 
 izmvector.o : izmvector.cpp ${HEADER}
 	g++ -c ${COMPILE_OPT} -o izmvector.o izmvector.cpp;

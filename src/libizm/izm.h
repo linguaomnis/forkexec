@@ -1,13 +1,18 @@
 #ifndef LIBIZM_H
 #define LIBIZM_H
 
+#include <openssl/md5.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 #include <limits.h>
+#include <time.h>
 #include <math.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define IZM_FALSE   (0)
 #define IZM_TRUE    (1)
@@ -17,10 +22,118 @@
 #define IZM_NONE    (5)
 #define IZM_END     (6)
 
+#define IZM_ISROOT  (geteuid() == 0)
+
 /*============================================================*/
 /* IZMMATH                                                    */
 /*============================================================*/
+
+#define IZMMATH_MD5STR_LEN          (MD5_DIGEST_LENGTH * 2)
+#define IZMMATH_MD5STR_SIZE         (IZMMATH_MD5STR_LEN + 1)
+
 double izmmath_fmod2( double x, double y );
+char* izmmath_get_md5( const char* _data, size_t _size );
+
+/*============================================================*/
+/* IZMUSR                                                     */
+/*============================================================*/
+
+#define IZMUSR_USER_MAXNUM          (128)
+#define IZMUSR_USERID_ADMIN         (0)
+#define IZMUSR_USERID_MIN           (1)
+#define IZMUSR_USERID_MAX           (IZMUSR_USER_MAXNUM - 1)
+#define IZMUSR_USERNAME_MINLEN      (1)
+#define IZMUSR_USERNAME_MAXLEN      (32)
+#define IZMUSR_USERNAME_SIZE        (IZMUSR_USERNAME_MAXLEN + 8)
+#define IZMUSR_USERNAME_ADMIN       "admin"
+#define IZMUSR_PASSWORD_MINLEN      (1)
+#define IZMUSR_PASSWORD_MAXLEN      (32)
+#define IZMUSR_PASSWORD_SIZE        (IZMUSR_PASSWORD_MAXLEN + 8)
+#define IZMUSR_PASSWORD_INIT        "pass123"
+#define IZMUSR_PASSHASH_LEN         (32)
+#define IZMUSR_PASSHASH_SIZE        (IZMUSR_PASSHASH_LEN + 8)
+#define IZMUSR_DISPNAME_MINLEN      (0)
+#define IZMUSR_DISPNAME_MAXLEN      (128)
+#define IZMUSR_DISPNAME_SIZE        (IZMUSR_DISPNAME_MAXLEN + 8)
+#define IZMUSR_LOCATION_MINLEN      (0)
+#define IZMUSR_LOCATION_MAXLEN      (128)
+#define IZMUSR_LOCATION_SIZE        (IZMUSR_LOCATION_MAXLEN + 8)
+#define IZMUSR_URL_MINLEN           (0)
+#define IZMUSR_URL_MAXLEN           (128)
+#define IZMUSR_URL_SIZE             (IZMUSR_URL_MAXLEN + 8)
+#define IZMUSR_ABOUT_MINLEN         (0)
+#define IZMUSR_ABOUT_MAXLEN         (1024)
+#define IZMUSR_ABOUT_SIZE           (IZMUSR_ABOUT_MAXLEN + 8)
+#define IZMUSR_DUMMY_SIZE           (2048 - ( \
+                                        + sizeof(int) \
+                                        + sizeof(int) \
+                                        + IZMUSR_USERNAME_SIZE \
+                                        + IZMUSR_PASSHASH_SIZE \
+                                        + IZMUSR_DISPNAME_SIZE \
+                                        + IZMUSR_LOCATION_SIZE \
+                                        + IZMUSR_URL_SIZE \
+                                        + IZMUSR_ABOUT_SIZE \
+                                    ) )
+
+typedef struct _IZMUSR_USERINFO {
+    int     used;
+    int     userid;
+    char    username[IZMUSR_USERNAME_SIZE];
+    char    passwordhash[IZMUSR_PASSHASH_SIZE];
+    char    dispname[IZMUSR_DISPNAME_SIZE];
+    char    location[IZMUSR_LOCATION_SIZE];
+    char    url[IZMUSR_URL_SIZE];
+    char    about[IZMUSR_ABOUT_SIZE];
+    char    dummy[IZMUSR_DUMMY_SIZE];
+} IZMUSR_USERINFO;
+
+#ifdef __cplusplus
+static_assert( sizeof(IZMUSR_USERINFO) == 2048, "invalid sizeof IZMUSR_USERINFO" );
+#else
+_Static_assert( sizeof(IZMUSR_USERINFO) == 2048, "invalid sizeof IZMUSR_USERINFO" );
+#endif
+
+typedef struct _IZMUSR_USERINFO_DB {
+    IZMUSR_USERINFO     user[IZMUSR_USER_MAXNUM];
+} IZMUSR_USERINFO_DB;
+
+unsigned char izmusr_clean_db( IZMUSR_USERINFO_DB* _db );
+unsigned char izmusr_load_db( IZMUSR_USERINFO_DB* _db, const char* _fpath );
+unsigned char izmusr_save_db( const IZMUSR_USERINFO_DB* _db, const char* _fpath );
+unsigned char izmusr_check_username( const char* _username );
+unsigned char izmusr_check_password( const char* _password );
+unsigned char izmusr_check_passwordhash( const char* _passwordhash );
+unsigned char izmusr_check_dispname( const char* _dispname );
+unsigned char izmusr_check_location( const char* _location );
+unsigned char izmusr_check_url( const char* _url );
+unsigned char izmusr_check_about( const char* _about );
+IZMUSR_USERINFO* izmusr_find_user_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid );
+const IZMUSR_USERINFO* izmusr_search_user_by_userid( const IZMUSR_USERINFO_DB* _db, const int _userid );
+IZMUSR_USERINFO* izmusr_find_user_by_username( IZMUSR_USERINFO_DB* _db, const char* _username );
+const IZMUSR_USERINFO* izmusr_search_user_by_username( const IZMUSR_USERINFO_DB* _db, const char* _username );
+unsigned char izmusr_add_user( IZMUSR_USERINFO_DB* _db, const char* _username );
+unsigned char izmusr_delete_user_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid );
+unsigned char izmusr_delete_user_by_username( IZMUSR_USERINFO_DB* _db, const char* _username );
+unsigned char izmusr_reset_password_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid );
+unsigned char izmusr_reset_password_by_username( IZMUSR_USERINFO_DB* _db, const char* _username );
+unsigned char izmusr_auth_by_userid_password( const IZMUSR_USERINFO_DB* _db, const int _userid, const char* _password );
+unsigned char izmusr_auth_by_username_password( const IZMUSR_USERINFO_DB* _db, const char* _username, const char* _password );
+unsigned char izmusr_auth_by_userid_passwordhash( const IZMUSR_USERINFO_DB* _db, const int _userid, const char* _passwordhash );
+unsigned char izmusr_auth_by_username_passwordhash( const IZMUSR_USERINFO_DB* _db, const char* _username, const char* _passwordhash );
+unsigned char izmusr_change_username_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _username_new );
+unsigned char izmusr_change_username_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _username_new );
+unsigned char izmusr_change_password_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _password_new );
+unsigned char izmusr_change_password_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _password_new );
+unsigned char izmusr_change_dispname_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _dispname_new );
+unsigned char izmusr_change_dispname_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _dispname_new );
+unsigned char izmusr_change_location_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _location_new );
+unsigned char izmusr_change_location_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _location_new );
+unsigned char izmusr_change_url_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _url_new );
+unsigned char izmusr_change_url_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _url_new );
+unsigned char izmusr_change_about_by_userid( IZMUSR_USERINFO_DB* _db, const int _userid, const char* _about_new );
+unsigned char izmusr_change_about_by_username( IZMUSR_USERINFO_DB* _db, const char* _username, const char* _about_new );
+const char* izmusr_get_passwordhash( const char* _password, char* _passwordhash );
+unsigned char izmusr_init_db( IZMUSR_USERINFO_DB* _db );
 
 /*============================================================*/
 /* IZMVECTOR                                                  */
@@ -53,6 +166,10 @@ unsigned char izmvector_remove( IZMVECTOR* _vp, const size_t _index );
 /*============================================================*/
 /* IZMSTR                                                     */
 /*============================================================*/
+unsigned char izmstr_check_nullterm( const char* _str, const size_t _size );
+
+char* izmstr_get_randstr( char* _buf, const size_t _buf_length, const char* _charset, const size_t _charset_length );
+
 char* izmstr_trim( char* _str );
 
 /* _strbuf のオフセット _offset から長さ _length の領域を _shiftnum だけずらす。 */

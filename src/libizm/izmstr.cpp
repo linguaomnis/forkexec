@@ -3,6 +3,46 @@
 #include <regex.h>
 
 extern "C"
+unsigned char izmstr_check_nullterm( const char* _str, const size_t _size )
+{
+    int i = 0;
+
+    for( i = 0; i < _size; i++ )
+    {
+        if( _str[i] == '\0' )
+            return( IZM_OK );
+    }
+
+    return( IZM_ERROR );
+};
+
+extern "C"
+char* izmstr_get_randstr(
+    char* _buf,
+    const size_t _buf_length,
+    const char* _charset,
+    const size_t _charset_length
+) {
+    static unsigned char init = 0;
+
+    if( ! init )
+    {
+        srand( (unsigned)time(NULL)*54321 );
+        init = 1;
+    }
+
+    int i = 0;
+
+    for( i = 0; i < _buf_length; i++ )
+    {
+        _buf[i] = _charset[ rand() % _charset_length ];
+    }
+    _buf[i] = '\0';
+
+    return( _buf );
+};
+
+extern "C"
 char* izmstr_trim( char* _str )
 {
     for( size_t i = 0; _str[i] != '\0'; i++ )
