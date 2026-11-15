@@ -1,0 +1,46 @@
+#!/bin/awk -E
+
+BEGIN {
+    _phase = "";
+    _key = "";
+    _print = 1;
+
+    if( ARGC == 2 )
+    {
+        key = ARGV[1];
+        ARGC = 1;
+        printf( "note : key[%s]\n", key ) > "/dev/stderr";
+    }
+    else
+    {
+        printf( "error : invalid arg\n" ) > "/dev/stderr";
+        exit 1;
+    }
+}
+
+$1 != "#ifdef" && $1 != "#else" && $1 != "#endif" && _print == 1 {
+    print;
+}
+
+$1 == "#ifdef" {
+    _phase = "if";
+    _key = $2;
+
+    if( _key != key )
+    {
+        _print = 0;
+    }
+}
+
+$1 == "#else" {
+    _phase = "else";
+    _print = ( ( _print == 0 ) ? 1 : 0 );
+}
+
+$1 == "#endif" {
+    _phase = "";
+    _key = "";
+    _print = 1;
+}
+
+
