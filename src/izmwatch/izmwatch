@@ -1,0 +1,64 @@
+#!/bin/bash
+
+LIBIZM="${FORKEXEC}/lib/libizm.sh";
+PROGNAME=$(basename $0);
+CONF="${FORKEXEC}/etc/izmwatch.conf";
+export LOG_WATCH=$(    awk '$1 == "log_watch"  {print $2}' ${CONF} );
+export LOG=$(          awk '$1 == "log"        {print $2}' ${CONF} );
+export LOG_REP=$(      awk '$1 == "log_rep"    {print $2}' ${CONF} );
+export CATCH_REP=$(    awk '$1 == "catch_rep"  {print $2}' ${CONF} );
+RET_NOTHING=2;
+
+. ${LIBIZM};
+
+
+function _start ()
+{
+    ${LOG_REP} ${LOG} ">> BEGIN";
+    ${LOG_REP} ${LOG} "LOG       : ${LOG}";
+    ${LOG_REP} ${LOG} "LOG_WATCH : ${LOG_WATCH}";
+    ${LOG_REP} ${LOG} "LOG_REP   : ${LOG_REP}";
+    ${LOG_REP} ${LOG} "CATCH_REP : ${CATCH_REP}";
+}
+
+function _loop ()
+{
+    ${LOG_REP} ${LOG} "loop begin";
+    
+    while true; do
+    
+        while true; do
+    
+            sleep 3;
+    
+            yes | ${CATCH_REP};
+    
+            if [[ $? == ${RET_NOTHING} ]]; then
+                break;
+            fi
+    
+        done;
+    
+        ${LOG_REP} ${LOG} "wait update ...";
+        TIME_BASE=$(stat -c "%Y" "${LOG_WATCH}");
+        while true; do
+            TIME=$(stat -c "%Y" "${LOG_WATCH}");
+            if [[ "${TIME}" != "${TIME_BASE}" ]]; then
+                break;
+            fi
+            sleep 1;
+        done;
+        ${LOG_REP} ${LOG} "catch!";
+    
+    done;
+
+    ${LOG_REP} ${LOG} "loop end";
+}
+
+function _end ()
+{
+    ${LOG_REP} ${LOG} "<< END";
+}
+
+lizm_daemon "__${PROGNAME}__" _start _loop _end $@;
+
